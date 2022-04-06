@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"context"
+	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-vk-api/vk"
 	"github.com/labstack/echo/v4"
@@ -23,6 +23,7 @@ var (
 	logger  *logrus.Logger
 	err     error
 	tmpls   []*template.Template
+	domain  = "192.168.2.5:4100"
 )
 
 func main() {
@@ -35,59 +36,63 @@ func main() {
 	logger.SetOutput(logFile)
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
-	tmpls = []*template.Template{}
+	//tmpls = []*template.Template{}
 
-	f, err := os.Open(`/home/ivan/goprj/src/myProjects/oauth/templates/index.html`)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-	b, err := ioutil.ReadAll(f)
-
-	indexTmpl, err := template.New(``).Parse(string(b))
-	if err != nil {
-		logger.Fatalln(err)
-	}
-
-	f, err = os.Open(`/home/ivan/goprj/src/myProjects/oauth/templates/me.html`)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-	b, err = ioutil.ReadAll(f)
-
-	meTmpl, err := template.New(``).Parse(string(b))
-	if err != nil {
-		logger.Fatalln(err)
-	}
-
-	tmpls = append(tmpls, indexTmpl)
-	tmpls = append(tmpls, meTmpl)
+	//f, err := os.Open(`/home/ivan/goprj/src/myProjects/oauth/templates/index.html`)
+	//if err != nil {
+	//	logger.Fatalln(err)
+	//}
+	//b, err := ioutil.ReadAll(f)
+	//
+	//indexTmpl, err := template.New(``).Parse(string(b))
+	//if err != nil {
+	//	logger.Fatalln(err)
+	//}
+	//
+	//f, err = os.Open(`/home/ivan/goprj/src/myProjects/oauth/templates/me.html`)
+	//if err != nil {
+	//	logger.Fatalln(err)
+	//}
+	//b, err = ioutil.ReadAll(f)
+	//
+	//meTmpl, err := template.New(``).Parse(string(b))
+	//if err != nil {
+	//	logger.Fatalln(err)
+	//}
+	//
+	//tmpls = append(tmpls, indexTmpl)
+	//tmpls = append(tmpls, meTmpl)
 
 	conf = &oauth2.Config{
 		ClientID:     "8013084",
 		ClientSecret: "cpKTaWZcYHZedKi6WdTk",
-		RedirectURL:  "http://192.168.1.75:8080/testauf",
-		Scopes:       []string{},
-		Endpoint:     ovk.Endpoint,
+		//RedirectURL:  "http://192.168.2.5:4100/mainpage",
+		RedirectURL: fmt.Sprintf("\"http://%s/testauf\"", domain),
+		Scopes:      []string{"email"},
+		Endpoint:    ovk.Endpoint,
 	}
 
 	e := echo.New()
-	e.GET(`/`, mpage)
+	e.GET(`/authVK`, mpage)
 	e.GET(`/testauf`, auth)
-
-	logger.Fatalln(e.Start(`192.168.1.75:8080`))
+	fmt.Println("http://" + domain + "/authVK")
+	logger.Fatalln(e.Start(domain))
 }
 
 func mpage(c echo.Context) (err error) {
-	url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline)
+	time.Sleep(10 * time.Second)
+	url := conf.AuthCodeURL("izi", oauth2.AccessTypeOffline)
+	log.Println(url)
 	logger.Infoln(url)
-	b := bytes.Buffer{}
-	err = tmpls[0].Execute(&b, url)
-	if err != nil {
-		logger.Fatalln(err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	return c.HTML(http.StatusOK, b.String())
+	//b := bytes.Buffer{}
+	//err = tmpls[0].Execute(&b, url)
+	//if err != nil {
+	//	logger.Fatalln(err)
+	//	return c.NoContent(http.StatusInternalServerError)
+	//}
+	//return c.HTML(http.StatusOK, b.String())
+	//return c.Redirect(301, url)
+	return c.NoContent(501)
 }
 
 func auth(c echo.Context) (err error) {
